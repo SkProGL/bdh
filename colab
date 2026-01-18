@@ -1,0 +1,7 @@
+from google.colab import drive
+drive.mount('/content/drive/')
+%cd /content/drive/MyDrive/colab/dragon_training
+!bash run.sh
+
+!nvidia-smi
+!python bdh/train.py

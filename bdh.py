@@ -49,7 +49,8 @@ class Attention(torch.nn.Module):
 
     @staticmethod
     def rope(phases, v):
-        v_rot = torch.stack((-v[..., 1::2], v[..., ::2]), dim=-1).view(*v.size())
+        v_rot = torch.stack((-v[..., 1::2], v[..., ::2]),
+                            dim=-1).view(*v.size())
         phases_cos, phases_sin = Attention.phases_cos_sin(phases)
         return (v * phases_cos).to(v.dtype) + (v_rot * phases_sin).to(v.dtype)
 
@@ -90,7 +91,8 @@ class BDH(nn.Module):
         self.ln = nn.LayerNorm(D, elementwise_affine=False, bias=False)
         self.embed = nn.Embedding(config.vocab_size, D)
         self.drop = nn.Dropout(config.dropout)
-        self.encoder_v = nn.Parameter(torch.zeros((nh, D, N)).normal_(std=0.02))
+        self.encoder_v = nn.Parameter(
+            torch.zeros((nh, D, N)).normal_(std=0.02))
 
         self.lm_head = nn.Parameter(
             torch.zeros((D, config.vocab_size)).normal_(std=0.02)
@@ -106,7 +108,7 @@ class BDH(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, return_latents=False):
         C = self.config
 
         B, T = idx.size()
@@ -138,7 +140,8 @@ class BDH(nn.Module):
             xy_sparse = self.drop(xy_sparse)
 
             yMLP = (
-                xy_sparse.transpose(1, 2).reshape(B, 1, T, N * nh) @ self.decoder
+                xy_sparse.transpose(1, 2).reshape(
+                    B, 1, T, N * nh) @ self.decoder
             )  # B, 1, T, D
             y = self.ln(yMLP)
             x = self.ln(x + y)
@@ -146,8 +149,10 @@ class BDH(nn.Module):
         logits = x.view(B, T, D) @ self.lm_head
         loss = None
         if targets is not None:
-            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
-
+            loss = F.cross_entropy(
+                logits.view(-1, logits.size(-1)), targets.view(-1))
+        if return_latents:
+            return logits, loss, x_sparse
         return logits, loss
 
     @torch.no_grad()
