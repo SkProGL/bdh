@@ -43,7 +43,7 @@ BDH_CONFIG = bdh.BDHConfig()
 
 BLOCK_SIZE = 32
 BATCH_SIZE = 64
-MAX_ITERS = 3000
+MAX_ITERS = 300
 LEARNING_RATE = 1e-3
 WEIGHT_DECAY = 0.01
 LOG_FREQ = 100
@@ -127,10 +127,23 @@ def eval(model):
     model.eval()
 
 
+def save_model(raw_model):
+    SAVE_PATH = "bdh_counting.pt"
+
+    checkpoint = {
+        "model_state_dict": raw_model.state_dict(),
+        "config": vars(BDH_CONFIG),
+    }
+
+    torch.save(checkpoint, SAVE_PATH)
+    print(f"Model saved to {SAVE_PATH}")
+
+
 if __name__ == "__main__":
     fetch_data()
 
     model = bdh.BDH(BDH_CONFIG).to(device)
+    save_model(model)
     model = torch.compile(model)
     # model = torch.compile(model, backend="eager")
     optimizer = torch.optim.AdamW(
