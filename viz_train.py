@@ -80,7 +80,7 @@ def launch_bdh_latent_grid(
                     text=[str(i) for i in range(D)],
                     textposition="middle center",
                     marker=dict(
-                        size=22,
+                        size=14,
                         color=x_norm[t],
                         colorscale=colorscale,
                         cmin=0.0,
