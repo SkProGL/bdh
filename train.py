@@ -92,6 +92,7 @@ if __name__ == "__main__":
 
     model = bdh.BDH(BDH_CONFIG).to(device)
     model = torch.compile(model)
+    # model = torch.compile(model, backend="eager")
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
     )

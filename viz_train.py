@@ -62,8 +62,10 @@ def launch_bdh_latent_grid(
     cols = int(np.ceil(np.sqrt(D)))
     rows = int(np.ceil(D / cols))
 
+    # x_pos = np.array([i % cols for i in range(D)])
+    # y_pos = np.array([-(i // cols) for i in range(D)])  # negative for top-down
     x_pos = np.array([i % cols for i in range(D)])
-    y_pos = np.array([-(i // cols) for i in range(D)])  # negative for top-down
+    y_pos = np.array([i // cols for i in range(D)])
 
     # ----------------------------
     # Per-token figure factory
@@ -80,7 +82,7 @@ def launch_bdh_latent_grid(
                     text=[str(i) for i in range(D)],
                     textposition="middle center",
                     marker=dict(
-                        size=14,
+                        size=22,
                         color=x_norm[t],
                         colorscale=colorscale,
                         cmin=0.0,
@@ -88,9 +90,22 @@ def launch_bdh_latent_grid(
                         line=dict(width=1, color="black"),
                         showscale=True,
                         colorbar=dict(
-                            title="Activation",
+                            title=dict(
+                                text="Activation",
+                                font=dict(
+                                    size=20,    # title font
+                                ),
+                            ),
+                            tickfont=dict(
+                                size=16,        # tick labels
+                            ),
+                            thickness=20,      # bar width
                             len=0.7,
                         ),
+                        # colorbar=dict(
+                        #     title="Activation",
+                        #     len=0.7,
+                        # ),
                     ),
                     hovertemplate=(
                         "Latent feature %{text}<br>"
@@ -99,12 +114,19 @@ def launch_bdh_latent_grid(
                 )
             ],
             layout=go.Layout(
-                title=f'Token {t}: "{token}"',
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
+                # title=f'Token {t}: "{token}"',
+                title=dict(
+                    text=f'Token {t}: "{token}"',
+                    font=dict(
+                        size=32,
+                        family="Arial",
+                    ),
+                ),
+                xaxis=dict(visible=True),
+                yaxis=dict(visible=True),
                 template="plotly_white",
                 height=height,
-                margin=dict(l=10, r=10, t=30, b=10),
+                margin=dict(l=0, r=0, t=60, b=0),
             ),
         )
 
@@ -132,7 +154,8 @@ def launch_bdh_latent_grid(
 
     app.layout = html.Div(
         [
-            html.H3("BDH Latent Feature Activation per Token"),
+            html.Br(),
+            html.H1("<br><br>BDH Latent Feature Activation per Token"),
             html.P(
                 "Each panel shows latent feature activations for one token. "
                 "Feature positions are fixed via PCA over activation patterns."
@@ -159,6 +182,22 @@ def launch_bdh_latent_grid(
 
     for t, token in enumerate(tokens):
         fig = make_figure(t, token)
+        fig.update_layout(
+            xaxis=dict(
+                range=[-1, cols - .1],
+                title="Latent column (x)",
+                tickmode="linear",
+                tick0=0,
+                dtick=5,
+            ),
+            yaxis=dict(
+                range=[-1, rows - .1],
+                title="Latent row (y)",
+                tickmode="linear",
+                tick0=0,
+                dtick=5,
+            ),
+        )
         pio.write_html(
             fig,
             file=f"bdh_latent_{t}_{token}.html",
@@ -277,6 +316,7 @@ if __name__ == "__main__":
 
     model = bdh.BDH(BDH_CONFIG).to(device)
     model = torch.compile(model)
+    # model = torch.compile(model, backend="eager")
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY
     )

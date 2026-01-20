@@ -149,8 +149,12 @@ class BDH(nn.Module):
         logits = x.view(B, T, D) @ self.lm_head
         loss = None
         if targets is not None:
+            # loss = F.cross_entropy(
+            #     logits.view(-1, logits.size(-1)), targets.view(-1))
             loss = F.cross_entropy(
-                logits.view(-1, logits.size(-1)), targets.view(-1))
+                logits.reshape(-1, logits.size(-1)),
+                targets.reshape(-1),
+            )
         if return_latents:
             return logits, loss, x_sparse
         return logits, loss
